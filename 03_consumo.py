@@ -18,7 +18,7 @@ codHtml = '''
         <ul>
                 <li><a href="/grafico1"> Top 10 países em consumo de alcool </a></li>
                 <li><a href="/grafico2"> Media de consumo por tipo </a></li>
-                <li><a href="/grafico3"> Consulmo total por região </a></li>
+                <li><a href="/grafico3"> Consumo total por região </a></li>
                 <li><a href="/grafico4"> Comparativo entre tipos de bebidas </a></li>
                 <li><a href="/#"> Insights por país </a></li>
          </ul>
@@ -101,6 +101,44 @@ def grafico2():
         title = 'Média Consumo golbal por tipo'
     )
     return figuraGrafico02.to_html()
+
+
+
+
+@app.route("/grafico3")
+def grafico3():
+    regioes = {
+        "Europa": ['France', 'Germany', 'Spain', 'Italy', 'Portugal'],
+        "Asia": ['China','Japan', 'India', 'Thailand'],
+        "Africa": ['Angola', 'Nigeria', 'Egypt', 'Algeria'],
+        "Americas": ['USA', 'Canada', 'Brazil', 'Argentina', 'Mexico'] 
+    }
+    dados = []
+    with sqlite3.connect(f'{caminho}banco01.bd') as conn:
+        # itera sobre o dicionario, de regios onde cada chave (regiao tem uma lista de paises ) 
+        for regiao, paises in regioes.items():
+            placeholders = ",".join([f"'{pais}'" for pais in paises])
+            query = f"""
+                SELECT SUM(total_litres_of_pure_alcohol) AS total
+                FROM bebidas
+                WHERE country IN ({placeholders})
+            """
+
+            total = pd.read_sql_query(query, conn).iloc[0,0]
+            dados.append({
+                "Região": regiao,
+                "Consumo Total": total
+            })
+
+    dfRegioes = pd.DataFrame(dados)
+    figuraGrafico3 = px.pie(
+        dfRegioes,
+        names= "Região",
+        values="Consumo Total",
+        title="Consumo total por Região"
+    )
+    return figuraGrafico3.to_html()
+
 
 
 if __name__ == '__main__':
